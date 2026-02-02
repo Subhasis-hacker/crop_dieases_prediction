@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AgriVision AI | Advanced Crop Diagnostics</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #2d6a4f;
+            --accent: #95d5b2;
+            --bg-gradient: linear-gradient(135deg, #1b4332 0%, #081c15 100%);
+            --glass: rgba(255, 255, 255, 0.9);
+            --neon: #40916c;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #2d3436;
+            overflow-x: hidden;
+        }
+
+        /* Ambient background glow */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: var(--accent);
+            filter: blur(150px);
+            border-radius: 50%;
+            z-index: -1;
+            top: -100px;
+            left: -100px;
+            opacity: 0.4;
+        }
+
+        .container {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            padding: 40px;
+            border-radius: 30px;
+            width: 100%;
+            max-width: 440px;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.3);
+            transform: translateY(0);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        h1 {
+            margin-bottom: 5px;
+            color: var(--primary);
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            color: #52b788;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Image Display Area */
+        .preview-wrapper {
+            position: relative;
+            width: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            background: #f0f2f0;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            display: none; /* Shown via JS */
+        }
+
+        #preview {
+            width: 100%;
+            display: block;
+            border-radius: 18px;
+        }
+
+        /* The Scanning Animation */
+        .scanner-line {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--accent);
+            box-shadow: 0 0 20px var(--accent), 0 0 10px var(--accent);
+            z-index: 10;
+            animation: scan 2s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+
+        /* Hidden standard input, replaced by custom label */
+        #imageInput { display: none; }
+
+        .custom-file-upload {
+            display: inline-block;
+            width: 100%;
+            padding: 20px;
+            border: 2px dashed #b7e4c7;
+            border-radius: 20px;
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            background: rgba(149, 213, 178, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .custom-file-upload:hover {
+            border-color: var(--primary);
+            background: rgba(149, 213, 178, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(45, 106, 79, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #1b4332;
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(45, 106, 79, 0.4);
+        }
+
+        button:active { transform: scale(0.98); }
+
+        /* Results Card */
+        .result {
+            margin-top: 25px;
+            padding: 25px;
+            background: white;
+            border-radius: 20px;
+            display: none;
+            border: 1px solid #d8f3dc;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #777;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .disease-name {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--primary);
+            display: block;
+            margin-bottom: 15px;
+        }
+
+        /* Confidence Bar */
+        .confidence-container {
+            background: #eee;
+            height: 8px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .confidence-bar {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 1.5s ease-in-out;
+        }
+
+        footer {
+            margin-top: 30px;
+            font-size: 11px;
+            color: #777;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>AgriVision AI</h1>
+        <div class="subtitle">Neural Crop Diagnostics</div>
+
+        <div class="preview-wrapper" id="previewWrapper">
+            <div class="scanner-line" id="scanner"></div>
+            <img id="preview" src="#" alt="Leaf Preview" />
+        </div>
+
+        <label for="imageInput" class="custom-file-upload" id="dropzone">
+            <span style="display: block; font-size: 30px; margin-bottom: 10px;">🍃</span>
+            <span id="fileName">Drop leaf image or click to browse</span>
+        </label>
+        <input type="file" id="imageInput" accept="image/*" onchange="showPreview(event)" />
+        
+        <button id="predictBtn" onclick="predict()">Analyze Specimen</button>
+
+        <div class="result" id="resultBox">
+            <div class="result-title">AI Diagnosis</div>
+            <span class="disease-name" id="diseaseName">Healthy Leaf</span>
+            
+            <div class="result-title">Confidence Level: <span id="confidence">0</span>%</div>
+            <div class="confidence-container">
+                <div class="confidence-bar" id="confidenceBar"></div>
+            </div>
+        </div>
+
+        <footer>
+            Precision Agriculture • TensorFlow Core
+        </footer>
+    </div>
+
+    <script>
+        function showPreview(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                const preview = document.getElementById("preview");
+                const wrapper = document.getElementById("previewWrapper");
+                const fileName = document.getElementById("fileName");
+
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    wrapper.style.display = "block";
+                    fileName.innerText = file.name;
+                }
+                reader.readAsDataURL(file);
+                document.getElementById("resultBox").style.display = "none";
+                document.getElementById("confidenceBar").style.width = "0%";
+            }
+        }
+
+        async function predict() {
+            const fileInput = document.getElementById("imageInput");
+            const resultBox = document.getElementById("resultBox");
+            const diseaseName = document.getElementById("diseaseName");
+            const confidenceText = document.getElementById("confidence");
+            const confBar = document.getElementById("confidenceBar");
+            const scanner = document.getElementById("scanner");
+            const btn = document.getElementById("predictBtn");
+
+            if (fileInput.files.length === 0) {
+                alert("Please select a leaf image first!");
+                return;
+            }
+
+            // Cinematic Loading State
+            scanner.style.display = "block";
+            resultBox.style.display = "none";
+            btn.disabled = true;
+            btn.innerText = "Running Neural Analysis...";
+
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            try {
+                const response = await fetch("/predict", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error("Connection failed");
+
+                const data = await response.json();
+                
+                // Add a slight delay for "Processing Theater"
+                setTimeout(() => {
+                    scanner.style.display = "none";
+                    diseaseName.innerText = data.predicted_class;
+                    confidenceText.innerText = data.confidence;
+                    resultBox.style.display = "block";
+                    
+                    // Animate the bar
+                    setTimeout(() => {
+                        confBar.style.width = data.confidence + "%";
+                    }, 100);
+
+                    btn.disabled = false;
+                    btn.innerText = "Re-Analyze Specimen";
+                }, 1500);
+
+            } catch (error) {
+                alert("Error: " + error.message);
+                scanner.style.display = "none";
+                btn.disabled = false;
+                btn.innerText = "Analyze Specimen";
+            }
+        }
+    </script>
+</body>
+</html>
